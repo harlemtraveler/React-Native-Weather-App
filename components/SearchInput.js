@@ -2,18 +2,45 @@ import React, { Component } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 export default class SearchInput extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      text: ''
+    };
+  }
+
+  // Component Lifecycle - (property initializers used)
+  handleChangeText = text => {
+    this.setState({ text });
+  };
+
+  handleSubmitEditing = () => {
+    const { onSubmit } = this.props;
+    const { text } = this.state;
+
+    if (!text) return;
+
+    onSubmit(text);
+    this.setState({ text: '' });
+  };
 
   render() {
+    // Destructured Objects
     const { placeholder } = this.props;
+    const { text } = this.state;
+
     return (
       <View style={styles.container}>
         <TextInput
           autocorrect={ false }
+          value={ text }
           placeholder={ placeholder }
           placeholderTextColor="white"
           underlineColorAndroid="transparent"
           style={ styles.textInput }
           clearButtonMode="always"
+          onChangeText={ this.handleChangeText }
+          onSubmitEditing={ this.handleSubmitEditing }
         />
       </View>
     );
