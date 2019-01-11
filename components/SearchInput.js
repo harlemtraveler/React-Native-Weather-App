@@ -9,7 +9,7 @@ export default class SearchInput extends Component {
     };
   }
 
-  // Component Lifecycle - (property initializers used)
+  // Lifecycle Hooks - (property initializers used)
   handleChangeText = text => {
     this.setState({ text });
   };

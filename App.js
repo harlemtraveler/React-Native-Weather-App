@@ -1,55 +1,109 @@
 import React, { Component } from 'react';
 import {
   KeyboardAvoidingView,
+  ActivityIndicator,
   ImageBackground,
+  StatusBar,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   View
 } from 'react-native';
+
 // Components
 import SearchInput from './components/SearchInput';
+import { fetchLocationId, fetchWeather } from './utils/api';
 import getImageForWeather from './utils/getImageForWeather';
 
 export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      location: 'San Francisco'
+      loading: false,
+      error: false,
+      location: '',
+      temperature: 0,
+      weather: '',
     };
   }
 
-  handleUpdateLocation = city => {
-    this.setState({ location: city });
+  componentDidMount() {
+    this.handleUpdateLocation('San Francisco');
+  }
+
+  handleUpdateLocation = async city => {
+    if (!city) return;
+
+    this.setState({ loading: true }, async () => {
+      try {
+        const locationId = await fetchLocationId(city);
+        const { location, weather, temperature } = await fetchWeather(locationId);
+
+        this.setState({
+          loading: false,
+          error: false,
+          location,
+          weather,
+          temperature
+        });
+      } catch (e) {
+        this.setState({
+          loading: false,
+          error: true
+        });
+      }
+    });
   };
 
   render() {
-    const { location } = this.state;
+    const { loading, error, location, temperature, weather } = this.state;
 
     return (
       <KeyboardAvoidingView style={ styles.container } behavior="padding">
+        <StatusBar barStyle="light-content" />
         <ImageBackground
-          source={ getImageForWeather('Clear') }
-          style={ styles.imageContainer }
-          imageStyle={ styles.image }
-          >
-            <View style={ styles.detailsContainer }>
-              <Text style={[styles.largeText, styles.textStyle]}>
-                { location }
-              </Text>
-              <Text style={[styles.smallText, styles.textStyle]}>
-                Light Cloud
-              </Text>
-              <Text style={[styles.largeText, styles.textStyle]}>
-                24°
-              </Text>
+          source={getImageForWeather(weather)}
+          style={styles.imageContainer}
+          imageStyle={styles.image}>
+          <View style={ styles.detailsContainer }>
+            <ActivityIndicator
+              animating={loading}
+              color="white"
+              size="large"
+            />
+            {!loading && (
+              <View>
 
-              <SearchInput
-                placeholder="Search any city"
-                onSubmit={ this.handleUpdateLocation }
-              />
-            </View>
+                {/* Displayed if there's an error */}
+                {error && (
+                  <Text style={[styles.smallText, styles.textStyle]}>
+                    Could not load weather, please try a different city.
+                  </Text>
+                )}
+
+                {/* Displayed if there is no errors */}
+                {!error && (
+                  <View>
+                    <Text style={[styles.largeText, styles.textStyle]}>
+                      { location }
+                    </Text>
+                    <Text style={[styles.smallText, styles.textStyle]}>
+                      { weather }
+                    </Text>
+                    <Text style={[styles.largeText, styles.textStyle]}>
+                      {`${Math.round(temperature)}°`}
+                    </Text>
+                  </View>
+                )}
+
+                <SearchInput
+                  placeholder="Search any city"
+                  onSubmit={ this.handleUpdateLocation }
+                />
+              </View>
+            )}
+          </View>
         </ImageBackground>
       </KeyboardAvoidingView>
     );
